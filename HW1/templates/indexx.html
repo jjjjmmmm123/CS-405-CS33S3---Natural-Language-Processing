@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+ 
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+
+    <title>Auto-Complete App</title>
+  </head>
+  <style>
+      h2{
+          margin-top: 30px;
+      }
+
+    body{
+        background-color: black;
+        color: orange;
+    }
+
+    table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px;
+}
+  </style>
+  <body>
+
+    <div class="container-fluid" style="max-width: 540px;" id="app" v-cloak>
+        <form>
+            <center><h2><b>AUTO-COMPLETE APP</b></h2></center><br>
+            <div class="mb-3">
+                <center><label for="age" class="form-label"><b>TYPE YOUR SENTENCE</b></label></center> 
+                <textarea class="form-control" v-model="text" rows="3"></textarea>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table>
+                  <tr>
+                    <th>#</th>
+                    <th>WORDS</th>
+                    <th>FREQUENCY</th>
+                  </tr>
+                  <tr>
+                    <td>
+                    <ol>
+                        <li style="cursor: pointer;" v-for="reco in recos.out" @click="useReco(reco)">{% raw %}______{{ reco[0] }}{% endraw %} ________ {% raw %}{{ reco[1] }}{% endraw %}</li>
+                    </ol>
+                  </td>
+                  </tr>
+                </table>
+              </div>
+
+            
+            
+        </form>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script type="text/javascript">
+        let cancelTokenSource = axios.CancelToken.source();
+
+        var app = new Vue({
+            el: '#app',
+            data: {
+                text: "",
+                recos: {},
+            },
+            methods: {
+                getReco: function() {
+                    cancelTokenSource.cancel();
+                    cancelTokenSource = axios.CancelToken.source();
+
+                    axios.post('/api/predict-word', {
+                        text: this.text,
+                    }, {
+                        cancelToken: cancelTokenSource.token
+                    })
+                    .then(response => {
+                        this.recos = response.data;
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+                },
+                useReco: function(reco) {
+                    this.text = this.text.slice(0, this.text.lastIndexOf(this.recos.in)).concat(reco[0]);
+                },
+            },
+            watch: { 
+                text: function (newVal, oldVal) {
+                    this.getReco();
+                }
+            }
+        });
+    </script>
+
+  </body>
+</html>
